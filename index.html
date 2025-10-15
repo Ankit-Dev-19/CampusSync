@@ -16,6 +16,12 @@
       text-align: center;
       color: #2c3e50;
     }
+    .quote {
+      text-align: center;
+      font-style: italic;
+      color: #555;
+      margin-bottom: 20px;
+    }
     .container {
       max-width: 600px;
       margin: auto;
@@ -44,6 +50,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-weight: bold;
     }
     button:hover {
       background: #2980b9;
@@ -56,11 +63,24 @@
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #777;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <h1>📚 Learnify Microlearning Planner</h1>
+  <p class="quote" id="quote"></p>
   <div class="container">
     <label for="goal">Learning Goal</label>
     <input type="text" id="goal" placeholder="e.g., UPSC, GRE, Java Programming" />
@@ -69,11 +89,27 @@
     <input type="number" id="duration" placeholder="e.g., 30" />
 
     <button onclick="generateSchedule()">Generate Schedule</button>
+    <button onclick="downloadSchedule()">Download Schedule</button>
 
     <div class="schedule" id="schedule"></div>
   </div>
+  <div class="footer">
+    © 2025 Learnify — Smart Microlearning Planner
+  </div>
 
   <script>
+    // === Random motivational quote ===
+    const quotes = [
+      "Small steps each day lead to big success.",
+      "Consistency beats intensity.",
+      "Keep going — progress is progress!",
+      "Stay curious and keep learning.",
+      "Discipline turns goals into achievements."
+    ];
+    document.getElementById('quote').innerText =
+      quotes[Math.floor(Math.random() * quotes.length)];
+
+    // === Generate schedule ===
     function generateSchedule() {
       const goal = document.getElementById('goal').value.trim();
       const duration = parseInt(document.getElementById('duration').value);
@@ -90,13 +126,68 @@
         topics.push(`${goal} - Micro Topic ${i}`);
       }
 
+      window.currentTopics = topics;
+      renderSchedule(topics);
+      saveSchedule(topics);
+    }
+
+    // === Render schedule with checkboxes ===
+    function renderSchedule(topics) {
+      const scheduleDiv = document.getElementById('schedule');
+      scheduleDiv.innerHTML = '';
+
       topics.forEach((topic, index) => {
         const div = document.createElement('div');
         div.className = 'topic';
-        div.innerText = `Day ${index + 1}: ${topic}`;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `day${index}`;
+        checkbox.checked = localStorage.getItem(`day${index}`) === 'true';
+
+        checkbox.addEventListener('change', () => {
+          localStorage.setItem(`day${index}`, checkbox.checked);
+        });
+
+        const label = document.createElement('label');
+        label.htmlFor = `day${index}`;
+        label.innerText = `Day ${index + 1}: ${topic}`;
+
+        div.appendChild(checkbox);
+        div.appendChild(label);
         scheduleDiv.appendChild(div);
       });
     }
+
+    // === Save and load schedule ===
+    function saveSchedule(topics) {
+      localStorage.setItem('learnifyTopics', JSON.stringify(topics));
+    }
+
+    function loadSchedule() {
+      const saved = localStorage.getItem('learnifyTopics');
+      if (saved) {
+        const topics = JSON.parse(saved);
+        window.currentTopics = topics;
+        renderSchedule(topics);
+      }
+    }
+
+    // === Download schedule as text file ===
+    function downloadSchedule() {
+      if (!window.currentTopics) {
+        alert('Please generate a schedule first!');
+        return;
+      }
+      const blob = new Blob([window.currentTopics.join("\n")], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "learnify_schedule.txt";
+      a.click();
+    }
+
+    // === Load existing progress on page load ===
+    window.onload = loadSchedule;
   </script>
 </body>
 </html>
